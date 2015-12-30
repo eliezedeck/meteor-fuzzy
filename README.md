@@ -32,6 +32,7 @@ cd zeromq-*
 ./configure --without-documentation --without-libsodium
 make -j8
 sudo make install
+sudo ldconfig
 ```
 
 ### ZMQ Support for your Meteor app
