@@ -1,7 +1,8 @@
 # meteor-fuzzy
-A tool that reads and monitor data from Meteor's MongoDB database and turns them into searchable data using fuzzy searching.
+A tool that reads and monitor data from Meteor's MongoDB database and turns them
+into searchable data using fuzzy searching.
 
-# Motivations
+## Motivations
 
 - Go memory usage is very appealing in most situations. Especially for my current
   usecase, other solutions like Elastic Search is just a bit overkill.
