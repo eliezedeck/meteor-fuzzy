@@ -65,3 +65,6 @@ With that said, this project's is just to connect the dots. That is, inter-conne
 Meteor's MongoDB and the actual algorithm that does the actual searching.
 
 The Interconnection part is done thru the help of ZMQ library.
+
+## LICENSE
+MIT
