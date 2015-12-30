@@ -36,6 +36,7 @@ func monitor(session *mgo.Session) {
 	})
 
 	ticker := time.NewTicker(time.Second * 10)
+	lastCount := 0
 
 	for {
 		select {
@@ -54,7 +55,7 @@ func monitor(session *mgo.Session) {
 				if len(line) > 0 {
 					_searchDataBase = append(_searchDataBase, line[1:])
 					_searchIDBase = append(_searchIDBase, op.Id)
-					log.Printf("Added: %s/ %s", op.Id, line[1:])
+					//log.Printf("Added: %s/ %s", op.Id, line[1:])
 				}
 				continue
 			}
@@ -62,7 +63,11 @@ func monitor(session *mgo.Session) {
 			// TODO: Implement the rest of the ops
 
 		case <-ticker.C:
-			log.Println("Number of searchable entries:", len(_searchIDBase))
+			now := len(_searchIDBase)
+			if now != lastCount {
+				log.Println("Number of searchable entries:", len(_searchIDBase))
+				lastCount = now
+			}
 
 		case r := <-searchChan:
 			var result []interface{}
