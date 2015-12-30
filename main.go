@@ -12,12 +12,14 @@ import (
 var (
 	mongoaddr string
 
-	paramFields string
+	paramFields       string
+	paramSearchListen string
 )
 
 func init() {
 	flag.StringVar(&mongoaddr, "mongo", "localhost:3001", "MongoDB address:port, default to localhost:3001 which is where Meteor sets-it up")
 	flag.StringVar(&paramFields, "fields", "", "Fields to search")
+	flag.StringVar(&paramSearchListen, "listen-search", "ipc://fuzzy-search.ipc", "URL on which ZMQ will listen for requests")
 
 	flag.Parse()
 
@@ -37,6 +39,7 @@ func main() {
 
 	msession.SetMode(mgo.Monotonic, true)
 
-	// go dumb()
+	// Start
+	go serveSearchRequests()
 	monitor(msession)
 }
