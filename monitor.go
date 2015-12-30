@@ -2,10 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"strings"
+	"time"
 
 	"github.com/rwynn/gtm"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+)
+
+var (
+	_searchIDBase   = make([]interface{}, 0, 128)
+	_searchDataBase = make([]string, 0, 128)
 )
 
 func getBeginTimestamp(session *mgo.Session, options *gtm.Options) bson.MongoTimestamp {
@@ -13,6 +21,10 @@ func getBeginTimestamp(session *mgo.Session, options *gtm.Options) bson.MongoTim
 }
 
 func monitor(session *mgo.Session) {
+	// Parse the "fields" parameter
+	paramFields = strings.Replace(paramFields, ",", " ", -1)
+	fields := strings.Fields(paramFields)
+
 	ops, errs := gtm.Tail(session, &gtm.Options{
 		After:               getBeginTimestamp, // if nil defaults to LastOpTimestamp
 		Filter:              filterOps,         // filter
@@ -22,24 +34,40 @@ func monitor(session *mgo.Session) {
 		ChannelSize:         32,                // if less than 1 defaults to 20
 	})
 
+	ticker := time.NewTicker(time.Second * 10)
+
 	for {
-		// loop forever receiving events
 		select {
 		case err := <-errs:
-			// handle errors
 			fmt.Println(err)
 		case op := <-ops:
-			// op will be an insert, delete or update to mongo
-			// you can check which by calling op.IsInsert(), op.IsDelete(), or op.IsUpdate()
-			// op.Data will get you the full document for inserts and updates
-			msg := fmt.Sprintf(`Got op <%v> for object <%v>
-          in database <%v>
-          and collection <%v>
-          and data <%v>
-          and timestamp <%v>`,
-				op.Operation, op.Id, op.GetDatabase(),
-				op.GetCollection(), op.Data, op.Timestamp)
-			fmt.Println(msg) // or do something more interesting
+			// msg := fmt.Sprintf(`Got op <%v> for object <%v>
+			//     in database <%v>
+			//     and collection <%v>
+			//     and data <%v>
+			//     and timestamp <%v>`,
+			// 	op.Operation, op.Id, op.GetDatabase(),
+			// 	op.GetCollection(), op.Data, op.Timestamp)
+
+			if op.IsInsert() {
+				line := ""
+				for _, field := range fields {
+					if data, ok := op.Data[field]; ok {
+						line += fmt.Sprintf(" %s", data)
+					}
+				}
+
+				if len(line) > 0 {
+					_searchDataBase = append(_searchDataBase, line[1:])
+					_searchIDBase = append(_searchIDBase, op.Id)
+					log.Println("Added:", line[1:])
+				}
+				continue
+			}
+
+		case <-ticker.C:
+			log.Println("Number of searchable entries:", len(_searchIDBase))
+			log.Println(_searchDataBase)
 		}
 	}
 }
