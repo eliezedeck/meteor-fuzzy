@@ -18,7 +18,7 @@ var (
 // 	time.Sleep(1 * time.Second)
 //
 // 	req := search{
-// 		q:     "zzzz",
+// 		q:     "ra",
 // 		limit: 3,
 // 		r:     make(chan []interface{}),
 // 	}

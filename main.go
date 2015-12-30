@@ -37,6 +37,6 @@ func main() {
 
 	msession.SetMode(mgo.Monotonic, true)
 
-	//go dumb()
+	// go dumb()
 	monitor(msession)
 }

@@ -43,14 +43,6 @@ func monitor(session *mgo.Session) {
 			fmt.Println(err)
 
 		case op := <-ops:
-			// msg := fmt.Sprintf(`Got op <%v> for object <%v>
-			//     in database <%v>
-			//     and collection <%v>
-			//     and data <%v>
-			//     and timestamp <%v>`,
-			// 	op.Operation, op.Id, op.GetDatabase(),
-			// 	op.GetCollection(), op.Data, op.Timestamp)
-
 			if op.IsInsert() {
 				line := ""
 				for _, field := range fields {
@@ -67,12 +59,14 @@ func monitor(session *mgo.Session) {
 				continue
 			}
 
+			// TODO: Implement the rest of the ops
+
 		case <-ticker.C:
 			log.Println("Number of searchable entries:", len(_searchIDBase))
 
 		case r := <-searchChan:
 			var result []interface{}
-			matches := fuzzy.FindFoldIdx(r.q, _searchDataBase)
+			matches := fuzzy.FindFoldIdx(r.q, _searchDataBase, r.limit)
 			for _, idx := range matches {
 				result = append(result, _searchIDBase[idx])
 			}
