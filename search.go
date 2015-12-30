@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"strconv"
 	"time"
 
 	zmq "github.com/pebbe/zmq4"
@@ -19,6 +18,12 @@ type search struct {
 	r     chan []interface{}
 }
 
+// _search used to unmarshal from JSON
+type _search struct {
+	Q     string `json:"q"`
+	Limit int    `json:"limit"`
+}
+
 var (
 	searchChan = make(chan search)
 )
@@ -31,11 +36,13 @@ func serveSearchRequests() {
 	time.Sleep(500 * time.Millisecond)
 	defer responder.Close()
 
+	log.Println("Accepting Search requests...")
+
 	// Grand Search loop
 	for {
 		b := mustRecv(responder)
 
-		var r map[string]string
+		var r _search
 		err = json.Unmarshal(b, &r)
 		if err != nil {
 			log.Printf("JSON Unmarshal error: %s. Ignoring!", err)
@@ -45,22 +52,12 @@ func serveSearchRequests() {
 			continue
 		}
 
-		if q, ok := r["q"]; ok && len(q) > 0 {
+		if len(r.Q) > 0 {
 			// Create a proper request
 			req := search{
-				q: q,
-				r: make(chan []interface{}),
-			}
-
-			if limit, ok := r["limit"]; ok {
-				// limit has been specified
-				l, err := strconv.ParseInt(limit, 10, 32)
-				if err != nil {
-					// limit is invalid
-					mustSend(responder, "{\"error\":\"Bad request: limit\"}")
-					continue
-				}
-				req.limit = int(l)
+				q:     r.Q,
+				limit: r.Limit,
+				r:     make(chan []interface{}),
 			}
 
 			// Query the search
@@ -77,6 +74,7 @@ func serveSearchRequests() {
 
 			// Send back the result
 			mustSendBytes(responder, b)
+			continue
 		}
 
 		// Respond empty
