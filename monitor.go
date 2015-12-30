@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/eliezedeck/fuzzysearch/fuzzy"
 	"github.com/rwynn/gtm"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -40,6 +41,7 @@ func monitor(session *mgo.Session) {
 		select {
 		case err := <-errs:
 			fmt.Println(err)
+
 		case op := <-ops:
 			// msg := fmt.Sprintf(`Got op <%v> for object <%v>
 			//     in database <%v>
@@ -60,14 +62,21 @@ func monitor(session *mgo.Session) {
 				if len(line) > 0 {
 					_searchDataBase = append(_searchDataBase, line[1:])
 					_searchIDBase = append(_searchIDBase, op.Id)
-					log.Println("Added:", line[1:])
+					log.Printf("Added: %s/ %s", op.Id, line[1:])
 				}
 				continue
 			}
 
 		case <-ticker.C:
 			log.Println("Number of searchable entries:", len(_searchIDBase))
-			log.Println(_searchDataBase)
+
+		case r := <-searchChan:
+			var result []interface{}
+			matches := fuzzy.FindFoldIdx(r.q, _searchDataBase)
+			for _, idx := range matches {
+				result = append(result, _searchIDBase[idx])
+			}
+			r.r <- result
 		}
 	}
 }

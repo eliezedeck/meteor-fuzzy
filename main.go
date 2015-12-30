@@ -36,5 +36,7 @@ func main() {
 	log.Printf("Connected to MongoDB '%s' ...", mongoaddr)
 
 	msession.SetMode(mgo.Monotonic, true)
+
+	//go dumb()
 	monitor(msession)
 }
