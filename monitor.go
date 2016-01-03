@@ -44,7 +44,9 @@ func monitor(session *mgo.Session) {
 			fmt.Println(err)
 
 		case op := <-ops:
-			if op.IsInsert() {
+			if op.IsDelete() {
+
+			} else {
 				line := ""
 				for _, field := range fields {
 					if data, ok := op.Data[field]; ok {
@@ -52,15 +54,24 @@ func monitor(session *mgo.Session) {
 					}
 				}
 
-				if len(line) > 0 {
-					_searchDataBase = append(_searchDataBase, line[1:])
-					_searchIDBase = append(_searchIDBase, op.Id)
-					//log.Printf("Added: %s/ %s", op.Id, line[1:])
+				if op.IsInsert() {
+					if len(line) > 0 {
+						_searchDataBase = append(_searchDataBase, line[1:])
+						_searchIDBase = append(_searchIDBase, op.Id)
+						//log.Printf("Added: %s/ %s", op.Id, line[1:])
+					}
+					continue
 				}
-				continue
-			}
 
-			// TODO: Implement the rest of the ops
+				if op.IsUpdate() {
+					if idx := findByID(op.Id); idx != -1 {
+						_searchDataBase[idx] = line[1:]
+						log.Printf("Updated %s to '%s'", op.Id, line[1:])
+					} else {
+						log.Printf("An item could not be found: %s. Update Ignored.", op.Id)
+					}
+				}
+			}
 
 		case <-ticker.C:
 			now := len(_searchIDBase)
@@ -78,4 +89,14 @@ func monitor(session *mgo.Session) {
 			r.r <- result
 		}
 	}
+}
+
+func findByID(id interface{}) int {
+	l := len(_searchIDBase)
+	for i := 0; i < l; i++ {
+		if _searchIDBase[i] == id {
+			return i
+		}
+	}
+	return -1
 }
