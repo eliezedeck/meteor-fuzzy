@@ -94,6 +94,14 @@ You will then receive a maximum amount of 5 (or any number you set). The format 
 
 Each of these are the ID of the items matched on the actual MongoDB database.
 
+In case of error, it will be:
+
+```json
+{
+  "error": "Error message will go here"
+}
+```
+
 ## Implementation
 `meteor-fuzzy` makes use of the library http://github.com/renstrom/fuzzysearch/fuzzy
 for the actual fuzzy searching algorithm. I had it forked to implement some of my requirements.
