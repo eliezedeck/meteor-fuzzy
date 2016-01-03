@@ -35,7 +35,7 @@ func monitor(session *mgo.Session) {
 		ChannelSize:         32,                // if less than 1 defaults to 20
 	})
 
-	ticker := time.NewTicker(time.Second * 10)
+	ticker := time.NewTicker(time.Second)
 	lastCount := 0
 
 	for {
@@ -45,7 +45,16 @@ func monitor(session *mgo.Session) {
 
 		case op := <-ops:
 			if op.IsDelete() {
+				// DELETE
+				//
 
+				if idx := findByID(op.Id); idx != -1 {
+					_searchIDBase = append(_searchIDBase[:idx], _searchIDBase[idx+1:]...)
+					_searchDataBase = append(_searchDataBase[:idx], _searchDataBase[idx+1:]...)
+					log.Printf("Deleted %s.", op.Id)
+				} else {
+					log.Printf("An item could not be found: %s. Delete Ignored.", op.Id)
+				}
 			} else {
 				line := ""
 				for _, field := range fields {
@@ -55,6 +64,9 @@ func monitor(session *mgo.Session) {
 				}
 
 				if op.IsInsert() {
+					// INSERT
+					//
+
 					if len(line) > 0 {
 						_searchDataBase = append(_searchDataBase, line[1:])
 						_searchIDBase = append(_searchIDBase, op.Id)
@@ -64,9 +76,15 @@ func monitor(session *mgo.Session) {
 				}
 
 				if op.IsUpdate() {
+					// UPDATE
+					//
+
 					if idx := findByID(op.Id); idx != -1 {
-						_searchDataBase[idx] = line[1:]
-						log.Printf("Updated %s to '%s'", op.Id, line[1:])
+						s := line[1:]
+						if _searchDataBase[idx] != s {
+							_searchDataBase[idx] = s
+							log.Printf("Updated %s to '%s'", op.Id, s)
+						}
 					} else {
 						log.Printf("An item could not be found: %s. Update Ignored.", op.Id)
 					}
