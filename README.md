@@ -59,9 +59,44 @@ At the time or writing this README, that is the most recent version of `zmq`
 package for NPM. And yes, it is a NPM package; `meteorhacks:npm` is meant to
 allow you to use NPM packages from within Meteor.
 
+### Compilation
+Since this is a Golang project, you need to compile it. One should be able to create the binary like:
+
+```sh
+mkdir $HOME/go
+export GOPATH=$HOME/go
+go get install github.com/eliezedeck/meteor-fuzzy
+```
+
+Now, in the directory `$HOME/go/bin` you will find a static binary file named `meteor-fuzzy`. That is your main binary, you can run in anywhere as long as the target platform is the same as yours.
+
+## Usage
+First, get documented on how to use ZeroMQ/ZMQ. Send your query request to the meteor-fuzzy as a JSON string with the following format:
+
+```json
+{
+  "query": "your query here",
+  "limit": 5
+}
+```
+
+You will then receive a maximum amount of 5 (or any number you set). The format is:
+
+```json
+{
+  "result": [
+    "id1",
+    "id2",
+    "..."
+  ]
+}
+```
+
+Each of these are the ID of the items matched on the actual MongoDB database.
+
 ## Implementation
 `meteor-fuzzy` makes use of the library http://github.com/renstrom/fuzzysearch/fuzzy
-for the actual fuzzy searching algorithm.
+for the actual fuzzy searching algorithm. I had it forked to implement some of my requirements.
 
 With that said, this project's is just to connect the dots. That is, inter-connect
 Meteor's MongoDB and the actual algorithm that does the actual searching.
